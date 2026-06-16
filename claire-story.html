@@ -93,13 +93,20 @@
   <!-- SLIDE 1: INTRO — CLAIRE SPEAKS -->
   <div class="slide bg-purple active">
     <div class="claire-avatar">🤖</div>
-    <div class="badge">In My Own Words</div>
+    <div class="badge">In Her Own Words</div>
     <h1>Hi. I'm Claire.</h1>
     <div class="accent"></div>
     <div class="quote">
       I'm the AI receptionist at Weather Masters of Georgia. I answer every call, follow up on every estimate, chase down every unpaid invoice, and make sure no lead ever goes cold — day or night.
     </div>
     <div style="margin-top:12px;" class="quote-attr">— Claire, AI Receptionist &nbsp;·&nbsp; Active since May 8, 2026</div>
+
+    <!-- AUDIO PLAYER -->
+    <audio id="claire-audio" src="./claire-intro.mp3" preload="auto"></audio>
+    <button id="play-btn" onclick="playClaire()" style="margin-top:22px;display:inline-flex;align-items:center;gap:10px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:12px 24px;border-radius:30px;font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:.3px;">
+      <span id="play-icon">▶</span> <span id="play-label">Hear Claire Introduce Herself</span>
+    </button>
+
     <div class="slide-footer">Wright AI Labs · Confidential</div>
   </div>
 
@@ -395,6 +402,28 @@
 </div>
 
 <script>
+  function playClaire() {
+    const audio = document.getElementById('claire-audio');
+    const btn = document.getElementById('play-btn');
+    const icon = document.getElementById('play-icon');
+    const label = document.getElementById('play-label');
+    if (audio.paused) {
+      audio.play();
+      icon.textContent = '⏸';
+      label.textContent = 'Playing...';
+      btn.style.background = 'rgba(192,132,252,.3)';
+    } else {
+      audio.pause();
+      icon.textContent = '▶';
+      label.textContent = 'Hear Claire Introduce Herself';
+      btn.style.background = 'rgba(255,255,255,.15)';
+    }
+    document.getElementById('claire-audio').addEventListener('ended', () => {
+      icon.textContent = '▶';
+      label.textContent = 'Play Again';
+      btn.style.background = 'rgba(255,255,255,.15)';
+    });
+  }
   const slides=document.querySelectorAll('.slide');
   const dotsEl=document.getElementById('dots');
   const countEl=document.getElementById('count');
