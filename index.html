@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Masters × Wright AI Labs — BI Platform Review</title>
+  <style>
+    :root{--navy:#1E2A5E;--blue:#1a56db;--green:#0e9f6e;--orange:#ff5a1f;--purple:#7c3aed;--red:#dc2626;--yellow:#d97706;--white:#fff;--light:#f3f4f6;--muted:#6b7280;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;overflow:hidden;height:100vh;}
+
+    /* SLIDE ENGINE */
+    .deck{width:100vw;height:100vh;position:relative;}
+    .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;opacity:0;pointer-events:none;transition:opacity .4s ease,transform .4s ease;transform:translateX(60px);}
+    .slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+    .slide.prev{opacity:0;transform:translateX(-60px);}
+
+    /* NAV */
+    .nav{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px;z-index:100;}
+    .nav-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;}
+    .nav-btn:hover{background:rgba(255,255,255,.25);}
+    .nav-dots{display:flex;gap:8px;}
+    .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .2s;}
+    .dot.active{background:white;}
+    .slide-count{color:rgba(255,255,255,.4);font-size:12px;min-width:50px;text-align:center;}
+
+    /* SLIDE BACKGROUNDS */
+    .bg-navy{background:linear-gradient(135deg,#1E2A5E 0%,#162040 100%);}
+    .bg-dark{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);}
+    .bg-blue{background:linear-gradient(135deg,#1a56db 0%,#1E2A5E 100%);}
+    .bg-green{background:linear-gradient(135deg,#065f46 0%,#1E2A5E 100%);}
+    .bg-purple{background:linear-gradient(135deg,#4c1d95 0%,#1E2A5E 100%);}
+    .bg-orange{background:linear-gradient(135deg,#92400e 0%,#1E2A5E 100%);}
+
+    /* TYPOGRAPHY */
+    .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.9);margin-bottom:16px;}
+    h1{font-size:clamp(36px,5vw,64px);font-weight:900;color:white;line-height:1.05;letter-spacing:-1px;text-align:center;margin-bottom:16px;}
+    h2{font-size:clamp(28px,3.5vw,48px);font-weight:800;color:white;line-height:1.1;letter-spacing:-.5px;text-align:center;margin-bottom:12px;}
+    h3{font-size:clamp(18px,2.5vw,28px);font-weight:700;color:white;margin-bottom:8px;}
+    .sub{font-size:clamp(14px,1.8vw,20px);color:rgba(255,255,255,.65);text-align:center;max-width:700px;line-height:1.6;margin-bottom:32px;}
+    .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.5);margin-bottom:4px;}
+
+    /* STAT BLOCKS */
+    .stat-row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:100%;max-width:900px;}
+    .stat{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 28px;text-align:center;flex:1;min-width:150px;}
+    .stat-val{font-size:clamp(28px,4vw,48px);font-weight:900;color:white;line-height:1;}
+    .stat-lbl{font-size:11px;color:rgba(255,255,255,.55);margin-top:6px;text-transform:uppercase;letter-spacing:.6px;}
+    .stat.green .stat-val{color:#34d399;}
+    .stat.blue .stat-val{color:#60a5fa;}
+    .stat.orange .stat-val{color:#fb923c;}
+    .stat.purple .stat-val{color:#c084fc;}
+    .stat.red .stat-val{color:#f87171;}
+    .stat.yellow .stat-val{color:#fbbf24;}
+
+    /* CARD GRID */
+    .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;width:100%;max-width:960px;}
+    .card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:20px 22px;}
+    .card-icon{font-size:28px;margin-bottom:10px;}
+    .card h3{font-size:16px;margin-bottom:4px;}
+    .card p{font-size:13px;color:rgba(255,255,255,.6);line-height:1.5;}
+    .card .tag{display:inline-block;margin-top:8px;background:rgba(255,255,255,.12);border-radius:10px;padding:2px 10px;font-size:11px;font-weight:600;color:rgba(255,255,255,.8);}
+
+    /* LIST */
+    .check-list{list-style:none;width:100%;max-width:700px;text-align:left;}
+    .check-list li{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.08);font-size:clamp(14px,1.6vw,18px);color:rgba(255,255,255,.85);line-height:1.4;}
+    .check-list li:last-child{border:none;}
+    .check-list .icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+
+    /* TWO COL */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:24px;width:100%;max-width:960px;}
+
+    /* TIMELINE */
+    .timeline{width:100%;max-width:760px;}
+    .tl-item{display:flex;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+    .tl-item:last-child{border:none;}
+    .tl-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .tl-dot.green{background:rgba(52,211,153,.2);}
+    .tl-dot.blue{background:rgba(96,165,250,.2);}
+    .tl-dot.purple{background:rgba(192,132,252,.2);}
+    .tl-dot.orange{background:rgba(251,146,60,.2);}
+    .tl-body{flex:1;}
+    .tl-title{font-size:15px;font-weight:700;color:white;}
+    .tl-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px;}
+
+    /* ACCENT LINE */
+    .accent{width:60px;height:4px;border-radius:2px;background:linear-gradient(90deg,#60a5fa,#34d399);margin:0 auto 28px;}
+
+    /* FOOTER LOGO */
+    .slide-footer{position:absolute;bottom:20px;right:28px;font-size:11px;color:rgba(255,255,255,.25);font-weight:600;letter-spacing:.5px;}
+
+    /* BIG NUMBER HIGHLIGHT */
+    .highlight{font-size:clamp(60px,8vw,100px);font-weight:900;background:linear-gradient(135deg,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+
+    /* PILL TAGS */
+    .pill-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:28px;}
+    .pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;color:rgba(255,255,255,.85);}
+    .pill.green{background:rgba(52,211,153,.15);border-color:rgba(52,211,153,.3);color:#34d399;}
+    .pill.blue{background:rgba(96,165,250,.15);border-color:rgba(96,165,250,.3);color:#60a5fa;}
+    .pill.orange{background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.3);color:#fb923c;}
+    .pill.purple{background:rgba(192,132,252,.15);border-color:rgba(192,132,252,.3);color:#c084fc;}
+  </style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: TITLE -->
+  <div class="slide bg-navy active" id="s1">
+    <div class="badge">⚡ Business Intelligence Platform Review</div>
+    <h1>Weather Masters<br>of Georgia</h1>
+    <div class="accent"></div>
+    <div class="sub">6-Week Pilot Update &nbsp;·&nbsp; Wright AI Labs &nbsp;·&nbsp; June 2026</div>
+    <div class="pill-row">
+      <span class="pill green">✅ AI Live</span>
+      <span class="pill blue">📊 6 BI Dashboards</span>
+      <span class="pill orange">📡 Meta CAPI Active</span>
+      <span class="pill purple">🤖 Claire Working 24/7</span>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 2: WHAT WE'VE BUILT -->
+  <div class="slide bg-dark" id="s2">
+    <div class="badge">The Platform</div>
+    <h2>What We've Built for<br>Weather Masters</h2>
+    <div class="accent"></div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🤖</div>
+        <h3>Claire AI Receptionist</h3>
+        <p>24/7 inbound call answering, appointment scheduling, lead capture — never misses a call.</p>
+        <span class="tag">Live since May 8</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>BI Report Suite</h3>
+        <p>6 live interactive dashboards replacing all PDF reports. Open from any browser, any device.</p>
+        <span class="tag">6 Dashboards Live</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">📞</div>
+        <h3>Outbound AI Workers</h3>
+        <p>Collections follow-up, estimate follow-up, and pipeline scheduling — running automatically.</p>
+        <span class="tag">3 Workers Active</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Meta CAPI Integration</h3>
+        <p>Local Leap ad conversions tracked directly — shows which Facebook ads produce real revenue.</p>
+        <span class="tag">Live as of June 15</span>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 3: BY THE NUMBERS -->
+  <div class="slide bg-blue" id="s3">
+    <div class="badge">Impact This Pilot</div>
+    <h2>By the Numbers</h2>
+    <div class="accent"></div>
+    <div class="stat-row">
+      <div class="stat green"><div class="stat-val">$5.64M</div><div class="stat-lbl">Revenue YTD</div></div>
+      <div class="stat orange"><div class="stat-val">$596K</div><div class="stat-lbl">Unclosed Pipeline</div></div>
+      <div class="stat blue"><div class="stat-val">$251K</div><div class="stat-lbl">Outstanding Invoices</div></div>
+      <div class="stat purple"><div class="stat-val">20,814</div><div class="stat-lbl">Total Customers</div></div>
+    </div>
+    <div style="margin-top:20px;" class="stat-row">
+      <div class="stat yellow"><div class="stat-val">74%</div><div class="stat-lbl">Lead Schedule Rate</div></div>
+      <div class="stat green"><div class="stat-val">27</div><div class="stat-lbl">Claire-Managed Leads</div></div>
+      <div class="stat blue"><div class="stat-val">$95K</div><div class="stat-lbl">Ad-Attributed Revenue</div></div>
+      <div class="stat orange"><div class="stat-val">246</div><div class="stat-lbl">Active Jobs</div></div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 4: BI DASHBOARDS -->
+  <div class="slide bg-dark" id="s4">
+    <div class="badge">BI Report Suite</div>
+    <h2>6 Live BI Dashboards</h2>
+    <div class="accent"></div>
+    <div class="sub" style="margin-bottom:20px;">All PDFs retired as of June 15. Every report is now an interactive web dashboard — open from any device, no attachments.</div>
+    <ul class="check-list">
+      <li><span class="icon">📊</span><div><strong>BI Executive Dashboard</strong> — YTD revenue, collections, lead sources, job mix<br><span style="font-size:12px;color:rgba(255,255,255,.4)">wm-executive-dashboard.vercel.app</span></div></li>
+      <li><span class="icon">⚙️</span><div><strong>BI Daily Operations Report</strong> — Today's jobs, Claire activity, unclosed pipeline<br><span style="font-size:12px;color:rgba(255,255,255,.4)">wm-daily-ops.vercel.app</span></div></li>
+      <li><span class="icon">📋</span><div><strong>BI Unclosed Estimates Report</strong> — 72 estimates, $596K pipeline, priority flags<br><span style="font-size:12px;color:rgba(255,255,255,.4)">wm-unclosed-estimates.vercel.app</span></div></li>
+      <li><span class="icon">📣</span><div><strong>BI Lead & Appointment Tracking</strong> — Lead funnel, schedule rates, source breakdown<br><span style="font-size:12px;color:rgba(255,255,255,.4)">wm-appointment-tracking.vercel.app</span></div></li>
+      <li><span class="icon">📈</span><div><strong>BI Ad Attribution & ROI Report</strong> — Local Leap, Facebook, Meta CAPI conversions<br><span style="font-size:12px;color:rgba(255,255,255,.4)">wm-ad-attribution.vercel.app</span></div></li>
+      <li><span class="icon">🤖</span><div><strong>BI Claire Automation Status</strong> — Live call activity, Vapi spend, system health<br><span style="font-size:12px;color:rgba(255,255,255,.4)">claire-automation-status-wright-ai-labs.vercel.app</span></div></li>
+    </ul>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 5: CLAIRE AI -->
+  <div class="slide bg-purple" id="s5">
+    <div class="badge">Claire AI</div>
+    <h2>Claire Is Working While<br>Your Team Sleeps</h2>
+    <div class="accent"></div>
+    <div class="two-col">
+      <div>
+        <ul class="check-list">
+          <li><span class="icon">📞</span><div><strong>Inbound calls answered 24/7</strong><br><span style="font-size:13px;opacity:.6">Never misses a lead — even at 1:50 AM</span></div></li>
+          <li><span class="icon">📅</span><div><strong>Appointment scheduling</strong><br><span style="font-size:13px;opacity:.6">74% schedule rate on Claire-managed leads</span></div></li>
+          <li><span class="icon">💰</span><div><strong>Collections follow-up</strong><br><span style="font-size:13px;opacity:.6">164 overdue invoices, $179K past due — called automatically</span></div></li>
+          <li><span class="icon">📋</span><div><strong>Estimate follow-up</strong><br><span style="font-size:13px;opacity:.6">72 unclosed estimates — Claire calls them</span></div></li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="stat purple" style="background:rgba(255,255,255,.08)"><div class="stat-val" style="color:#c084fc;">4</div><div class="stat-lbl">Phone Numbers Active</div></div>
+        <div class="stat purple" style="background:rgba(255,255,255,.08)"><div class="stat-val" style="color:#34d399;">24/7</div><div class="stat-lbl">Availability</div></div>
+        <div class="stat purple" style="background:rgba(255,255,255,.08)"><div class="stat-val" style="color:#60a5fa;">3</div><div class="stat-lbl">Outbound Workers</div></div>
+        <div class="stat purple" style="background:rgba(255,255,255,.08)"><div class="stat-val" style="color:#fbbf24;">$0</div><div class="stat-lbl">Missed Call Cost</div></div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 6: META CAPI -->
+  <div class="slide bg-dark" id="s6">
+    <div class="badge">Meta CAPI — Live June 15, 2026</div>
+    <h2>Now We Know Which<br>Ads Are Making Money</h2>
+    <div class="accent"></div>
+    <div class="sub">For the first time, Weather Masters can see exactly which Facebook ad leads converted to paying jobs — and how much revenue each campaign generated.</div>
+    <div class="stat-row">
+      <div class="stat green"><div class="stat-val">$60K</div><div class="stat-lbl">Local Leap Pipeline</div></div>
+      <div class="stat blue"><div class="stat-val">21</div><div class="stat-lbl">Local Leap Jobs</div></div>
+      <div class="stat orange"><div class="stat-val">$35K</div><div class="stat-lbl">Facebook Direct</div></div>
+      <div class="stat purple"><div class="stat-val">Live</div><div class="stat-lbl">CAPI Status</div></div>
+    </div>
+    <div style="margin-top:24px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px 24px;max-width:700px;text-align:left;">
+      <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.7;">
+        ⚡ <strong style="color:white">How it works:</strong> When a Local Leap job is marked complete in HCP, Wright AI Labs automatically fires a Meta Purchase conversion event. This tells Facebook which ads produced real revenue — enabling smarter ad targeting and better cost-per-acquisition. <strong style="color:#34d399;">The Zapier bridge is off. We own this pipeline.</strong>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 7: THIS WEEK'S WINS -->
+  <div class="slide bg-green" id="s7">
+    <div class="badge">June 15, 2026 — This Week</div>
+    <h2>What Changed This Week</h2>
+    <div class="accent"></div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot green">✅</div>
+        <div class="tl-body"><div class="tl-title">All 6 BI Dashboards Deployed</div><div class="tl-sub">PDFs permanently retired — every report is now a live web dashboard</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot purple">📡</div>
+        <div class="tl-body"><div class="tl-title">Meta CAPI Integration Went Live</div><div class="tl-sub">Local Leap conversions now tracked — Zapier bridge retired, Sean Greene confirmed</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot blue">🔧</div>
+        <div class="tl-body"><div class="tl-title">Claire AI Patched — Same Day</div><div class="tl-sub">Digit readback bug caught from transcript, fixed before 9 AM — Dennis Diler lead recovered to HCP</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot orange">📈</div>
+        <div class="tl-body"><div class="tl-title">Ad Attribution & ROI Dashboard Built</div><div class="tl-sub">$95K in attributed revenue visible for the first time — ROAS calculator ready for Sean's spend data</div></div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot green">👥</div>
+        <div class="tl-body"><div class="tl-title">Added to Weather Masters WhatsApp Group</div><div class="tl-sub">Jason added Wright AI Labs to internal ops channel — 15 members including Sean Greene</div></div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 8: THE INVESTMENT -->
+  <div class="slide bg-navy" id="s8">
+    <div class="badge">The Investment</div>
+    <h2>What This Costs vs.<br>What It Returns</h2>
+    <div class="accent"></div>
+    <div class="two-col" style="max-width:860px;width:100%;">
+      <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;">
+        <div style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.5);margin-bottom:16px;">The Platform</div>
+        <div style="font-size:48px;font-weight:900;color:white;">$1,000<span style="font-size:20px;font-weight:400;opacity:.6">/mo</span></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px;margin-bottom:20px;">Growth Plan · Locked permanently · $2K setup fee waived</div>
+        <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ Claire AI — 24/7 receptionist</li>
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ 3 outbound call workers</li>
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ 6 live BI dashboards</li>
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ Meta CAPI integration</li>
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ Daily automated reports</li>
+          <li style="font-size:13px;color:rgba(255,255,255,.75);">✅ Ongoing support & improvements</li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);border-radius:12px;padding:18px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#34d399;margin-bottom:6px;">If Claire closes 1 extra job/month</div>
+          <div style="font-size:28px;font-weight:800;color:white;">$3,000–$12,000</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5);">Average HVAC job value</div>
+        </div>
+        <div style="background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);border-radius:12px;padding:18px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#60a5fa;margin-bottom:6px;">Unclosed pipeline being worked</div>
+          <div style="font-size:28px;font-weight:800;color:white;">$596,745</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5);">72 estimates Claire is following up on</div>
+        </div>
+        <div style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.25);border-radius:12px;padding:18px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#fb923c;margin-bottom:6px;">Overdue invoices being called</div>
+          <div style="font-size:28px;font-weight:800;color:white;">$179,512</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5);">164 invoices Claire pursues daily</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 9: WHAT'S NEXT -->
+  <div class="slide bg-dark" id="s9">
+    <div class="badge">Roadmap</div>
+    <h2>What's Coming Next</h2>
+    <div class="accent"></div>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>ROI Dashboard — Full ROAS</h3>
+        <p>Once Local Leap shares monthly ad spend, we'll show exact return on every ad dollar. Cost-per-job, revenue-per-campaign.</p>
+        <span class="tag">Pending spend data</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <h3>SMS Follow-Up</h3>
+        <p>Add text message follow-up for estimates and collections — higher response rates than calls alone.</p>
+        <span class="tag">In planning</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🗓️</div>
+        <h3>HCP Calendar Integration</h3>
+        <p>Claire books directly into HCP — no back-and-forth, confirmed appointments instantly.</p>
+        <span class="tag">In planning</span>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏆</div>
+        <h3>Review Automation</h3>
+        <p>Auto-request Google reviews after completed jobs — boost rating and local SEO rank.</p>
+        <span class="tag">In planning</span>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 10: CLOSE -->
+  <div class="slide bg-navy" id="s10">
+    <div class="badge">Thank You</div>
+    <div class="highlight">Let's Build<br>on This.</div>
+    <div style="margin-top:16px;" class="accent"></div>
+    <div class="sub">6 weeks. 6 dashboards. Claire answering calls at 2 AM. $95K attributed. And we're just getting started.</div>
+    <div class="pill-row">
+      <span class="pill green">🤖 Claire: Active 24/7</span>
+      <span class="pill blue">📊 6 BI Dashboards Live</span>
+      <span class="pill orange">📡 Meta CAPI: Live</span>
+    </div>
+    <div style="margin-top:12px;font-size:14px;color:rgba(255,255,255,.5);">
+      Dennis Wright &nbsp;·&nbsp; Wright AI Labs &nbsp;·&nbsp; wrightailabs.com &nbsp;·&nbsp; June 2026
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+</div><!-- end deck -->
+
+<!-- NAV BAR -->
+<div class="nav">
+  <button class="nav-btn" id="prev" onclick="changeSlide(-1)">‹</button>
+  <div class="nav-dots" id="dots"></div>
+  <button class="nav-btn" id="next" onclick="changeSlide(1)">›</button>
+  <div class="slide-count" id="count"></div>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const countEl = document.getElementById('count');
+  let cur = 0;
+
+  // Build dots
+  slides.forEach((_,i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' active':'');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  });
+
+  function updateUI() {
+    slides.forEach((s,i) => {
+      s.classList.remove('active','prev');
+      if(i===cur) s.classList.add('active');
+      else if(i<cur) s.classList.add('prev');
+    });
+    document.querySelectorAll('.dot').forEach((d,i)=>{
+      d.classList.toggle('active', i===cur);
+    });
+    countEl.textContent = `${cur+1} / ${slides.length}`;
+  }
+
+  function goTo(n) {
+    cur = Math.max(0, Math.min(n, slides.length-1));
+    updateUI();
+  }
+
+  function changeSlide(dir) { goTo(cur+dir); }
+
+  document.addEventListener('keydown', e => {
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown') changeSlide(1);
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp') changeSlide(-1);
+  });
+
+  updateUI();
+</script>
+</body>
+</html>
