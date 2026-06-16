@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Claire's Story — Weather Masters × Wright AI Labs</title>
+  <style>
+    :root{--navy:#1E2A5E;--blue:#1a56db;--green:#0e9f6e;--orange:#ff5a1f;--purple:#7c3aed;--red:#dc2626;--yellow:#d97706;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;overflow:hidden;height:100vh;}
+    .deck{width:100vw;height:100vh;position:relative;}
+    .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px;opacity:0;pointer-events:none;transition:opacity .45s ease,transform .45s ease;transform:translateX(60px);}
+    .slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+    .slide.prev{opacity:0;transform:translateX(-60px);}
+    .nav{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px;z-index:100;}
+    .nav-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer;transition:background .2s;display:flex;align-items:center;justify-content:center;}
+    .nav-btn:hover{background:rgba(255,255,255,.25);}
+    .nav-dots{display:flex;gap:8px;}
+    .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:background .2s;}
+    .dot.active{background:white;}
+    .slide-count{color:rgba(255,255,255,.4);font-size:12px;min-width:50px;text-align:center;}
+    .bg-navy{background:linear-gradient(135deg,#1E2A5E 0%,#162040 100%);}
+    .bg-dark{background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);}
+    .bg-purple{background:linear-gradient(135deg,#4c1d95 0%,#1E2A5E 100%);}
+    .bg-green{background:linear-gradient(135deg,#065f46 0%,#1E2A5E 100%);}
+    .bg-blue{background:linear-gradient(135deg,#1a56db 0%,#1E2A5E 100%);}
+    .bg-orange{background:linear-gradient(135deg,#92400e 0%,#1E2A5E 100%);}
+    .bg-red{background:linear-gradient(135deg,#7f1d1d 0%,#1E2A5E 100%);}
+    .badge{display:inline-block;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.9);margin-bottom:16px;}
+    h1{font-size:clamp(38px,5.5vw,70px);font-weight:900;color:white;line-height:1.05;letter-spacing:-1px;text-align:center;margin-bottom:16px;}
+    h2{font-size:clamp(28px,3.5vw,50px);font-weight:800;color:white;line-height:1.1;letter-spacing:-.5px;text-align:center;margin-bottom:12px;}
+    .accent{width:60px;height:4px;border-radius:2px;background:linear-gradient(90deg,#c084fc,#60a5fa);margin:0 auto 24px;}
+    .sub{font-size:clamp(14px,1.8vw,20px);color:rgba(255,255,255,.65);text-align:center;max-width:700px;line-height:1.6;margin-bottom:28px;}
+    .highlight{font-size:clamp(56px,8vw,96px);font-weight:900;background:linear-gradient(135deg,#c084fc,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;text-align:center;}
+    .slide-footer{position:absolute;bottom:20px;right:28px;font-size:11px;color:rgba(255,255,255,.25);font-weight:600;letter-spacing:.5px;}
+
+    /* PROBLEM SLIDE */
+    .problem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;width:100%;max-width:900px;}
+    .problem-card{background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.25);border-radius:14px;padding:20px;text-align:center;}
+    .problem-card .icon{font-size:32px;margin-bottom:10px;}
+    .problem-card .val{font-size:22px;font-weight:800;color:#f87171;margin-bottom:4px;}
+    .problem-card .lbl{font-size:12px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.5px;}
+
+    /* TIMELINE */
+    .story-timeline{width:100%;max-width:800px;display:flex;flex-direction:column;gap:0;}
+    .tl-row{display:flex;gap:0;position:relative;}
+    .tl-row:not(:last-child)::after{content:'';position:absolute;left:55px;top:52px;width:2px;height:calc(100% - 20px);background:rgba(255,255,255,.12);}
+    .tl-left{width:110px;flex-shrink:0;padding-top:14px;text-align:right;padding-right:16px;}
+    .tl-date{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;line-height:1.3;}
+    .tl-center{width:24px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;padding-top:14px;}
+    .tl-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;z-index:1;}
+    .tl-dot.purple{background:rgba(192,132,252,.25);border:2px solid rgba(192,132,252,.5);}
+    .tl-dot.blue{background:rgba(96,165,250,.25);border:2px solid rgba(96,165,250,.5);}
+    .tl-dot.green{background:rgba(52,211,153,.25);border:2px solid rgba(52,211,153,.5);}
+    .tl-dot.orange{background:rgba(251,146,60,.25);border:2px solid rgba(251,146,60,.5);}
+    .tl-dot.yellow{background:rgba(251,191,36,.25);border:2px solid rgba(251,191,36,.5);}
+    .tl-right{flex:1;padding:10px 0 18px 16px;}
+    .tl-title{font-size:16px;font-weight:700;color:white;margin-bottom:3px;}
+    .tl-body{font-size:13px;color:rgba(255,255,255,.6);line-height:1.5;}
+
+    /* CAPABILITY CARDS */
+    .cap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;width:100%;max-width:960px;}
+    .cap-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:18px;text-align:left;}
+    .cap-card .icon{font-size:26px;margin-bottom:10px;}
+    .cap-card h3{font-size:14px;font-weight:700;color:white;margin-bottom:4px;}
+    .cap-card p{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;}
+    .cap-card .stat{font-size:22px;font-weight:800;color:#34d399;margin:6px 0 2px;}
+
+    /* NEXT ITEMS */
+    .next-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:860px;}
+    .next-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;display:flex;gap:14px;align-items:flex-start;}
+    .next-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+    .next-icon.purple{background:rgba(192,132,252,.15);}
+    .next-icon.blue{background:rgba(96,165,250,.15);}
+    .next-icon.green{background:rgba(52,211,153,.15);}
+    .next-icon.orange{background:rgba(251,146,60,.15);}
+    .next-body h3{font-size:14px;font-weight:700;color:white;margin-bottom:4px;}
+    .next-body p{font-size:12px;color:rgba(255,255,255,.55);line-height:1.5;}
+    .next-body .eta{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:8px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);}
+  </style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+  <!-- SLIDE 1: COVER -->
+  <div class="slide bg-purple active">
+    <div class="badge">🤖 AI Receptionist & Platform</div>
+    <div class="highlight">Meet Claire.</div>
+    <div class="accent"></div>
+    <div class="sub">From answering the phone at 2 AM to running a full Business Intelligence platform — this is how Claire grew from a receptionist into the backbone of Weather Masters' operations in just 6 weeks.</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.35);margin-top:8px;">May 8, 2026 → Present &nbsp;·&nbsp; Wright AI Labs</div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 2: THE PROBLEM -->
+  <div class="slide bg-red">
+    <div class="badge">Before Claire — The Problem</div>
+    <h2>Leads Lost. Money Left<br>on the Table. Every Day.</h2>
+    <div class="accent"></div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">📞</div>
+        <div class="val">Missed</div>
+        <div class="lbl">After-hours calls with no answer</div>
+      </div>
+      <div class="problem-card">
+        <div class="icon">📋</div>
+        <div class="val">72</div>
+        <div class="lbl">Unclosed estimates sitting idle</div>
+      </div>
+      <div class="problem-card">
+        <div class="icon">💰</div>
+        <div class="val">$179K</div>
+        <div class="lbl">Overdue invoices with no follow-up</div>
+      </div>
+      <div class="problem-card">
+        <div class="icon">📊</div>
+        <div class="val">None</div>
+        <div class="lbl">Real-time visibility into operations</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;font-size:15px;color:rgba(255,255,255,.55);max-width:700px;text-align:center;line-height:1.6;">
+      Weather Masters had strong revenue and a great team — but no system working behind the scenes to capture every opportunity and follow up on every dollar.
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 3: WEEK 1 — CLAIRE GOES LIVE -->
+  <div class="slide bg-dark">
+    <div class="badge">Week 1 — May 8, 2026</div>
+    <h2>Claire Picks Up<br>Her First Call</h2>
+    <div class="accent"></div>
+    <div class="story-timeline">
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">May 8</div></div>
+        <div class="tl-center"><div class="tl-dot purple">🚀</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Pilot Kickoff</div>
+          <div class="tl-body">Claire goes live on +1 (770) 609-1257. First inbound call answered by AI — 24/7, never on hold, never ringing out.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">May 8–15</div></div>
+        <div class="tl-center"><div class="tl-dot blue">📞</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Inbound Call Handling Active</div>
+          <div class="tl-body">Claire greets new and existing customers, captures contact info, schedules appointments, and routes calls to the right team member. 74% of leads she manages get scheduled.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Mid May</div></div>
+        <div class="tl-center"><div class="tl-dot green">📋</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Estimate Follow-Up Worker Launched</div>
+          <div class="tl-body">Claire begins calling customers with open unclosed estimates — targeting jobs that were quoted but never closed. Runs 4x per day automatically.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 4: WEEKS 2-3 -->
+  <div class="slide bg-dark">
+    <div class="badge">Weeks 2–3 — Late May 2026</div>
+    <h2>Claire Gets Her<br>Second Job. Then Her Third.</h2>
+    <div class="accent"></div>
+    <div class="story-timeline">
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Late May</div></div>
+        <div class="tl-center"><div class="tl-dot orange">💰</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Collections Follow-Up Goes Live</div>
+          <div class="tl-body">Claire starts calling customers with overdue invoices — 164 accounts, $179,512 past due. Runs every 4 hours. Polite, persistent, professional.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Late May</div></div>
+        <div class="tl-center"><div class="tl-dot blue">📅</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Pipeline Scheduling Worker Added</div>
+          <div class="tl-body">Claire begins proactively calling jobs marked "needs scheduling" — reaching out every 2 hours to fill the calendar before the team even starts their day.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">May–June</div></div>
+        <div class="tl-center"><div class="tl-dot green">🏆</div></div>
+        <div class="tl-right">
+          <div class="tl-title">103+ Calls Placed in a Single Day</div>
+          <div class="tl-body">Peak activity: Claire placed over 103 outbound calls in one day — estimate follow-ups, collections, and scheduling. All automatic. No human hours.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 5: WEEKS 4-5 — BI PLATFORM -->
+  <div class="slide bg-blue">
+    <div class="badge">Weeks 4–5 — June 2026</div>
+    <h2>Claire Gets Eyes.<br>The BI Platform is Born.</h2>
+    <div class="accent"></div>
+    <div class="story-timeline">
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">June 9</div></div>
+        <div class="tl-center"><div class="tl-dot blue">📊</div></div>
+        <div class="tl-right">
+          <div class="tl-title">First BI Reports Sent to Jason & Bobby</div>
+          <div class="tl-body">Daily Operations, Unclosed Estimates, Executive Dashboard — emailed every morning. Weather Masters gets their first real-time operational visibility.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">June 11</div></div>
+        <div class="tl-center"><div class="tl-dot green">🌐</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Dashboards Move to Vercel — Interactive Web</div>
+          <div class="tl-body">Reports evolve from static PDFs to live, clickable web dashboards. Click a period tab. Expand an accordion. Open on your phone. No downloads, no attachments.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">June 12–14</div></div>
+        <div class="tl-center"><div class="tl-dot purple">📣</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Lead & Appointment Tracking Dashboard Live</div>
+          <div class="tl-body">27 Claire-managed leads. 74% schedule rate. 4 lead sources tracked: Facebook, Local Leap, Google, Angi. All visible in one dashboard.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 6: WEEK 6 — THIS WEEK -->
+  <div class="slide bg-green">
+    <div class="badge">Week 6 — June 15, 2026</div>
+    <h2>The Platform Grows Up.<br>PDFs Are Gone Forever.</h2>
+    <div class="accent"></div>
+    <div class="story-timeline">
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Jun 15<br>8:30 AM</div></div>
+        <div class="tl-center"><div class="tl-dot green">✅</div></div>
+        <div class="tl-right">
+          <div class="tl-title">All 6 BI Dashboards — PDFs Permanently Retired</div>
+          <div class="tl-body">Executive Dashboard, Daily Ops, Unclosed Estimates, Lead Tracking, Ad Attribution, Claire Status — all live, all interactive, sent to Jason & Bobby every morning.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Jun 15<br>5:01 PM</div></div>
+        <div class="tl-center"><div class="tl-dot purple">📡</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Meta CAPI Goes Live — Ad Attribution Activated</div>
+          <div class="tl-body">Every completed Local Leap job now fires a conversion event to Facebook. Sean Greene confirmed Zapier bridge is off. Weather Masters now knows exactly which ads produce revenue.</div>
+        </div>
+      </div>
+      <div class="tl-row">
+        <div class="tl-left"><div class="tl-date">Jun 15<br>8:30 AM</div></div>
+        <div class="tl-center"><div class="tl-dot orange">🔧</div></div>
+        <div class="tl-right">
+          <div class="tl-title">Claire Patched Same-Day — No Lead Left Behind</div>
+          <div class="tl-body">Digit readback bug caught from call transcript, fixed before 9 AM. Dennis Diler — new customer who called at 1:50 AM — recovered to HCP. No lead lost.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 7: WHERE SHE IS TODAY -->
+  <div class="slide bg-dark">
+    <div class="badge">Today — June 15, 2026</div>
+    <h2>Claire Today — What She<br>Does While You Work</h2>
+    <div class="accent"></div>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="icon">📞</div>
+        <div class="stat">24/7</div>
+        <h3>Inbound Calls</h3>
+        <p>Never misses a call. New & existing customers. Leads captured, appointments scheduled.</p>
+      </div>
+      <div class="cap-card">
+        <div class="icon">📋</div>
+        <div class="stat">72</div>
+        <h3>Unclosed Estimates</h3>
+        <p>$596,745 pipeline. Claire calls every open estimate 4x per day until it closes or expires.</p>
+      </div>
+      <div class="cap-card">
+        <div class="icon">💰</div>
+        <div class="stat">$179K</div>
+        <h3>Collections Active</h3>
+        <p>164 overdue invoices. Claire pursues them every 4 hours — politely, persistently, automatically.</p>
+      </div>
+      <div class="cap-card">
+        <div class="icon">📅</div>
+        <div class="stat">51</div>
+        <h3>Jobs Needing Scheduling</h3>
+        <p>Pipeline worker checks every 2 hours and calls to fill the calendar before the team's day starts.</p>
+      </div>
+      <div class="cap-card">
+        <div class="icon">📊</div>
+        <div class="stat">6</div>
+        <h3>BI Dashboards</h3>
+        <p>Live reports auto-sent every morning. Executives see the whole business at a glance.</p>
+      </div>
+      <div class="cap-card">
+        <div class="icon">📡</div>
+        <div class="stat">Live</div>
+        <h3>Meta CAPI</h3>
+        <p>Every Local Leap job completed fires a Facebook conversion. Ad spend optimized automatically.</p>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 8: WHAT'S NEXT -->
+  <div class="slide bg-navy">
+    <div class="badge">What's Next for Claire</div>
+    <h2>She's Just Getting Started.</h2>
+    <div class="accent"></div>
+    <div class="next-grid">
+      <div class="next-card">
+        <div class="next-icon purple">📱</div>
+        <div class="next-body">
+          <h3>SMS Follow-Up</h3>
+          <p>Text message follow-up for estimates and collections — higher response rates than calls alone. Customers reply on their own time.</p>
+          <span class="eta">July 2026</span>
+        </div>
+      </div>
+      <div class="next-card">
+        <div class="next-icon blue">🗓️</div>
+        <div class="next-body">
+          <h3>HCP Direct Booking</h3>
+          <p>Claire books directly into HCP calendar — confirmed appointments created automatically without any human touchpoint.</p>
+          <span class="eta">July–August 2026</span>
+        </div>
+      </div>
+      <div class="next-card">
+        <div class="next-icon green">⭐</div>
+        <div class="next-body">
+          <h3>Review Automation</h3>
+          <p>After every completed job, Claire follows up to request a Google review — boosting rating and local search visibility automatically.</p>
+          <span class="eta">August 2026</span>
+        </div>
+      </div>
+      <div class="next-card">
+        <div class="next-icon orange">📈</div>
+        <div class="next-body">
+          <h3>Full ROAS Dashboard</h3>
+          <p>Once ad spend data is connected, the BI platform shows exact return on every advertising dollar — by campaign, ad set, and job type.</p>
+          <span class="eta">Pending spend data</span>
+        </div>
+      </div>
+    </div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+  <!-- SLIDE 9: CLOSE -->
+  <div class="slide bg-purple">
+    <div class="badge">6 Weeks. Real Results.</div>
+    <div class="highlight">Claire Works.<br>You Win.</div>
+    <div style="margin-top:20px;" class="accent"></div>
+    <div class="sub">From a receptionist who answered the phone — to an AI platform tracking $5.64M in revenue, pursuing $596K in open estimates, and attributing every Facebook ad dollar to real jobs.</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:#c084fc;">6 wks</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Time to Platform</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:#34d399;">$1K/mo</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Total Investment</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:#60a5fa;">$596K</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Pipeline Worked</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 20px;text-align:center;">
+        <div style="font-size:28px;font-weight:900;color:#fbbf24;">24/7</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">Always On</div>
+      </div>
+    </div>
+    <div style="margin-top:24px;font-size:13px;color:rgba(255,255,255,.35);">Dennis Wright &nbsp;·&nbsp; Wright AI Labs &nbsp;·&nbsp; wrightailabs.com &nbsp;·&nbsp; June 2026</div>
+    <div class="slide-footer">Wright AI Labs · Confidential</div>
+  </div>
+
+</div>
+
+<div class="nav">
+  <button class="nav-btn" onclick="changeSlide(-1)">‹</button>
+  <div class="nav-dots" id="dots"></div>
+  <button class="nav-btn" onclick="changeSlide(1)">›</button>
+  <div class="slide-count" id="count"></div>
+</div>
+
+<script>
+  const slides=document.querySelectorAll('.slide');
+  const dotsEl=document.getElementById('dots');
+  const countEl=document.getElementById('count');
+  let cur=0;
+  slides.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' active':'');d.onclick=()=>goTo(i);dotsEl.appendChild(d);});
+  function updateUI(){slides.forEach((s,i)=>{s.classList.remove('active','prev');if(i===cur)s.classList.add('active');else if(i<cur)s.classList.add('prev');});document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===cur));countEl.textContent=`${cur+1} / ${slides.length}`;}
+  function goTo(n){cur=Math.max(0,Math.min(n,slides.length-1));updateUI();}
+  function changeSlide(dir){goTo(cur+dir);}
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown')changeSlide(1);if(e.key==='ArrowLeft'||e.key==='ArrowUp')changeSlide(-1);});
+  updateUI();
+</script>
+</body>
+</html>
